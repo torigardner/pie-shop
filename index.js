@@ -3,6 +3,8 @@ let app = express();
 let router = express.Router();
 let pieRepo = require('./repos/pieRepo')
 
+app.use(express.json())
+app.use('/api/', router)
 
 router.get('/', function(req,res,next){
     pieRepo.get(
@@ -84,7 +86,97 @@ router.get('/:id', function(req,res,next){
     )
 })
 
-app.use('/api/', router)
+router.post('/', function(req, res, next){
+    pieRepo.insert(
+        req.body, 
+        function(data){
+            res.status(201).json({
+                "status": 201,
+                "statusText": "Created",
+                "message": "Data was created.",
+                "data": data
+            })
+        },
+        function(err){
+            next(err)
+        }
+    )
+})
+
+router.put('/:id', function(req,res,next){
+    pieRepo.getById(
+        req.params.id,
+        function(data){
+            if(data){
+                pieRepo.update(
+                    req.body,
+                    req.params.id,
+                    function(data){
+                        res.status(200).json({
+                            "status": 200,
+                            "statusText": "OK",
+                            "message": "Pie with ID: '" + req.params.id + "' was updated.",
+                            "data": data
+                        })
+                    },
+                    function(err){
+                        next(err)
+                    },
+                )
+            }else{
+                res.status(404).json({
+                    "status": 404,
+                    "statusText": "Pie Not Found",
+                    "message": "Pie with ID: '" + req.params.id + "' was not found.",
+                    "error": {
+                        "code": "NOT_FOUND",
+                        "message": "Pie with ID: '" + req.params.id + "' was not found."
+                    }
+                })
+            } 
+        },
+        function(err){
+            next(err)
+        },
+    )
+})
+
+router.delete('/:id', function(req, res, next){
+    pieRepo.getById(
+        req.params.id, 
+        function(data){
+            if(data){
+                pieRepo.delete(
+                    req.params.id,
+                    function(data){
+                        res.status(200).json({
+                            "status": 200,
+                            "statusText": "OK",
+                            "message": "Pie with ID: '" + req.params.id + "' was deleted.",
+                            "data": data
+                        })
+                    }, 
+                    function(err){
+                        next(err)
+                    }
+                )
+            }else{
+                res.status(404).json({
+                    "status": 404,
+                    "statusText": "Pie Not Found",
+                    "message": "Pie with ID: '" + req.params.id + "' was not found.",
+                    "error": {
+                        "code": "NOT_FOUND",
+                        "message": "Pie with ID: '" + req.params.id + "' was not found."
+                    }
+                })
+            }
+        },
+        function(err){
+            next(err)
+        }
+    )
+})
 
 var server = app.listen(5000, function(){
     console.log('Node server is running')
